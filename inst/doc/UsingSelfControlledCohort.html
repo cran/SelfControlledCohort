@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+<meta name="date" content="2026-06-09" />
+
+<title>Using SelfControlledCohort</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Using SelfControlledCohort</h1>
+<h4 class="date">2026-06-09</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#setup-and-data" id="toc-setup-and-data"><span class="toc-section-number">1</span> Setup and Data</a></li>
+<li><a href="#running-a-basic-analysis" id="toc-running-a-basic-analysis"><span class="toc-section-number">2</span> Running a Basic Analysis</a></li>
+<li><a href="#understanding-risk-windows" id="toc-understanding-risk-windows"><span class="toc-section-number">3</span> Understanding Risk Windows</a></li>
+<li><a href="#using-custom-cohorts" id="toc-using-custom-cohorts"><span class="toc-section-number">4</span> Using Custom Cohorts</a></li>
+<li><a href="#diagnostics-and-tiered-blinding" id="toc-diagnostics-and-tiered-blinding"><span class="toc-section-number">5</span> Diagnostics and Tiered
+Blinding</a></li>
+<li><a href="#empirical-calibration" id="toc-empirical-calibration"><span class="toc-section-number">6</span>
+Empirical Calibration</a></li>
+<li><a href="#multi-analysis-workflow" id="toc-multi-analysis-workflow"><span class="toc-section-number">7</span> Multi-Analysis Workflow</a></li>
+<li><a href="#working-with-the-results-database" id="toc-working-with-the-results-database"><span class="toc-section-number">8</span> Working with the Results
+Database</a></li>
+</ul>
+</div>
+
+<p>The <strong>SelfControlledCohort</strong> package estimates the
+association between an exposure and an outcome by comparing the rate of
+outcomes during exposed time to the rate of outcomes during unexposed
+time within the same cohort of people. It is “self-controlled” because
+each person serves as their own control.</p>
+<p>This vignette demonstrates how to run a Self-Controlled Cohort (SCC)
+analysis using the <code>Eunomia</code> example dataset.</p>
+<div id="setup-and-data" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Setup and Data</h1>
+<p>First, we need to load the necessary packages and set up a connection
+to the <code>Eunomia</code> database. <code>Eunomia</code> provides a
+small, simulated Common Data Model (CDM) database for demonstration
+purposes.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SelfControlledCohort)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(Eunomia)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(DatabaseConnector)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Create a temporary SQLite database with Eunomia data</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>connectionDetails <span class="ot">&lt;-</span> <span class="fu">getEunomiaConnectionDetails</span>()</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>connection <span class="ot">&lt;-</span> <span class="fu">connect</span>(connectionDetails)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># We will use the &#39;main&#39; schema for this example</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>cdmDatabaseSchema <span class="ot">&lt;-</span> <span class="st">&quot;main&quot;</span></span></code></pre></div>
+</div>
+<div id="running-a-basic-analysis" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Running a Basic
+Analysis</h1>
+<p>For a first example, let’s run an analysis across <strong>all
+drugs</strong> (exposure) and <strong>all conditions</strong> (outcome)
+available in the database.</p>
+<p>We specify: * <code>exposureTable</code> / <code>outcomeTable</code>:
+We use the standard CDM tables <code>drug_era</code> and
+<code>condition_era</code>. * <code>exposureIds</code>: Left empty to
+include all drugs. * <code>outcomeIds</code>: Left empty to include all
+conditions.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Define a temporary folder for results</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>outputFolder <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="st">&quot;scc_output&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">dir.create</span>(outputFolder)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># Run the analysis</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">runSelfControlledCohort</span>(</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">connectionDetails =</span> connectionDetails,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">cdmDatabaseSchema =</span> cdmDatabaseSchema,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">exposureTable =</span> <span class="st">&quot;drug_era&quot;</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">outcomeTable =</span> <span class="st">&quot;condition_era&quot;</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">resultExportPath =</span> outputFolder,</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="at">databaseId =</span> <span class="dv">1</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  <span class="at">analysisId =</span> <span class="dv">1</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; Computing time at risk exposed and unexposed windows</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; Retrieving counts from database</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=====                                                                 |   8%  |                                                                              |===========                                                           |  15%  |                                                                              |================                                                      |  23%  |                                                                              |======================                                                |  31%  |                                                                              |===========================                                           |  38%  |                                                                              |================================                                      |  46%  |                                                                              |======================================                                |  54%  |                                                                              |===========================================                           |  62%  |                                                                              |================================================                      |  69%  |                                                                              |======================================================                |  77%  |                                                                              |===========================================================           |  85%  |                                                                              |=================================================================     |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; Computing raw effect estimates</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; Initiating cluster with 10 threads</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; Stopping cluster</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; Running diagnostics</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; Running SCC diagnostics</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; - Running MDRR (power) diagnostic</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; - Running pre-exposure gain diagnostic</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; - Running event-dependent observation diagnostic</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; - Running EASE (systematic error) diagnostic</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; Completed 33248 diagnostic tests</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 6925 diagnostic test(s) failed:</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; Computing time at risk distribution statistics</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |====                                                                  |   6%  |                                                                              |========                                                              |  12%  |                                                                              |============                                                          |  18%  |                                                                              |================                                                      |  24%  |                                                                              |=====================                                                 |  29%  |                                                                              |=========================                                             |  35%  |                                                                              |=============================                                         |  41%  |                                                                              |=================================                                     |  47%  |                                                                              |=====================================                                 |  53%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  65%  |                                                                              |=================================================                     |  71%  |                                                                              |======================================================                |  76%  |                                                                              |==========================================================            |  82%  |                                                                              |==============================================================        |  88%  |                                                                              |==================================================================    |  94%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; Cleaning up intermedate tables</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=========                                                             |  12%  |                                                                              |==================                                                    |  25%  |                                                                              |==========================                                            |  38%  |                                                                              |===================================                                   |  50%  |                                                                              |============================================                          |  62%  |                                                                              |====================================================                  |  75%  |                                                                              |=============================================================         |  88%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; Performing SCC analysis took 24.5 secs</span></span></code></pre></div>
+<p>Now we can read the results and inspect the estimates.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(outputFolder, <span class="st">&quot;scc_result.csv&quot;</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co"># Display the top 5 associations by Relative Risk</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>results <span class="sc">%&gt;%</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="fu">filter</span>(analysis_id <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(rr)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="fu">select</span>(target_cohort_id, outcome_cohort_id, rr, lb_95, ub_95, p_value) <span class="sc">%&gt;%</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">3</span>)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">target_cohort_id</th>
+<th align="right">outcome_cohort_id</th>
+<th align="right">rr</th>
+<th align="right">lb_95</th>
+<th align="right">ub_95</th>
+<th align="right">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">701322</td>
+<td align="right">4155034</td>
+<td align="right">Inf</td>
+<td align="right">0.027</td>
+<td align="right">Inf</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">705944</td>
+<td align="right">0</td>
+<td align="right">Inf</td>
+<td align="right">0.024</td>
+<td align="right">Inf</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">705944</td>
+<td align="right">440448</td>
+<td align="right">Inf</td>
+<td align="right">0.024</td>
+<td align="right">Inf</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">705944</td>
+<td align="right">4001336</td>
+<td align="right">Inf</td>
+<td align="right">0.024</td>
+<td align="right">Inf</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">705944</td>
+<td align="right">4048695</td>
+<td align="right">Inf</td>
+<td align="right">0.024</td>
+<td align="right">Inf</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>rr</code> column shows the Incidence Rate Ratio. An IRR
+&gt; 1 indicates an increased risk.</p>
+</div>
+<div id="understanding-risk-windows" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Understanding Risk
+Windows</h1>
+<p>To perform the comparison, each person’s observation time is
+partitioned into “exposed” and “unexposed” risk windows relative to
+their exposure start and end dates.</p>
+<p>You control these windows using the
+<code>runSelfControlledCohort()</code> arguments:</p>
+<ul>
+<li><strong>Exposed time:</strong> Defined by
+<code>riskWindowStartExposed</code> and
+<code>riskWindowEndExposed</code>. If
+<code>addLengthOfExposureExposed = TRUE</code>, the end window is added
+to the exposure <em>end</em> date instead of the start date.</li>
+<li><strong>Unexposed time:</strong> Defined by
+<code>riskWindowStartUnexposed</code> and
+<code>riskWindowEndUnexposed</code>. These are typically set to negative
+values (e.g., <code>-30</code> to <code>-1</code>) to create a
+pre-exposure baseline window.</li>
+</ul>
+</div>
+<div id="using-custom-cohorts" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Using Custom
+Cohorts</h1>
+<p>In practice, we often want to study specific cohorts defined by
+complex logic (e.g., “New users of NSAIDs”). We can create these cohorts
+and pass them to the function.</p>
+<p><code>Eunomia</code> includes definitions for NSAIDs and GI Bleed.
+Let’s create them.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Create standard cohorts in the &#39;cohort&#39; table:</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co"># 1 = Celecoxib</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># 2 = Diclofenac</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># 3 = GI Bleed</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># 4 = NSAIDs</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">createCohorts</span>(connectionDetails)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; Cohorts created in table main.cohort</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;   cohortId       name</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 1        1  Celecoxib</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 2        2 Diclofenac</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 3        3    GiBleed</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 4        4     NSAIDs</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;                                                                                        description</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 1    A simplified cohort definition for new users of celecoxib, designed specifically for Eunomia.</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 2    A simplified cohort definition for new users ofdiclofenac, designed specifically for Eunomia.</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 3 A simplified cohort definition for gastrointestinal bleeding, designed specifically for Eunomia.</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; 4       A simplified cohort definition for new users of NSAIDs, designed specifically for Eunomia.</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt;   count</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; 1  1844</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; 2   850</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; 3   479</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; 4  2694</span></span></code></pre></div>
+<p>Now run the analysis using these specific cohorts.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">runSelfControlledCohort</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">connectionDetails =</span> connectionDetails,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">cdmDatabaseSchema =</span> cdmDatabaseSchema,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">exposureTable =</span> <span class="st">&quot;cohort&quot;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">outcomeTable =</span> <span class="st">&quot;cohort&quot;</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">exposureIds =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>), <span class="co"># Celecoxib, Diclofenac, NSAIDs</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">outcomeIds =</span> <span class="fu">c</span>(<span class="dv">3</span>), <span class="co"># GI Bleed</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">databaseId =</span> <span class="dv">1</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">analysisId =</span> <span class="dv">2</span>, <span class="co"># Unique ID for this run</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">resultExportPath =</span> outputFolder</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; Computing time at risk exposed and unexposed windows</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Retrieving counts from database</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=====                                                                 |   8%  |                                                                              |===========                                                           |  15%  |                                                                              |================                                                      |  23%  |                                                                              |======================                                                |  31%  |                                                                              |===========================                                           |  38%  |                                                                              |================================                                      |  46%  |                                                                              |======================================                                |  54%  |                                                                              |===========================================                           |  62%  |                                                                              |================================================                      |  69%  |                                                                              |======================================================                |  77%  |                                                                              |===========================================================           |  85%  |                                                                              |=================================================================     |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Computing raw effect estimates</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Initiating cluster with 10 threads</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; Stopping cluster</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Running diagnostics</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; Running SCC diagnostics</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; - Running MDRR (power) diagnostic</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; - Running pre-exposure gain diagnostic</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; - Running event-dependent observation diagnostic</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; - Running EASE (systematic error) diagnostic</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; Completed 9 diagnostic tests</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 3 diagnostic test(s) failed:</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; Computing time at risk distribution statistics</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |====                                                                  |   6%  |                                                                              |========                                                              |  12%  |                                                                              |============                                                          |  18%  |                                                                              |================                                                      |  24%  |                                                                              |=====================                                                 |  29%  |                                                                              |=========================                                             |  35%  |                                                                              |=============================                                         |  41%  |                                                                              |=================================                                     |  47%  |                                                                              |=====================================                                 |  53%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  65%  |                                                                              |=================================================                     |  71%  |                                                                              |======================================================                |  76%  |                                                                              |==========================================================            |  82%  |                                                                              |==============================================================        |  88%  |                                                                              |==================================================================    |  94%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; Cleaning up intermedate tables</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |======                                                                |   8%  |                                                                              |============                                                          |  17%  |                                                                              |==================                                                    |  25%  |                                                                              |=======================                                               |  33%  |                                                                              |=============================                                         |  42%  |                                                                              |===================================                                   |  50%  |                                                                              |=========================================                             |  58%  |                                                                              |===============================================                       |  67%  |                                                                              |====================================================                  |  75%  |                                                                              |==========================================================            |  83%  |                                                                              |================================================================      |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a><span class="co">#&gt; Performing SCC analysis took 5.83 secs</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(outputFolder, <span class="st">&quot;scc_result.csv&quot;</span>))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>results <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">filter</span>(analysis_id <span class="sc">==</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">select</span>(target_cohort_id, outcome_cohort_id, rr, p_value) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">3</span>)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">target_cohort_id</th>
+<th align="right">outcome_cohort_id</th>
+<th align="right">rr</th>
+<th align="left">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right">Inf</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">Inf</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">3</td>
+<td align="right">Inf</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="diagnostics-and-tiered-blinding" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Diagnostics and Tiered
+Blinding</h1>
+<p>Reliable evidence requires that the analysis assumptions are met. The
+package evaluates four diagnostics (aligned with the Self-Controlled
+Case Series package) to check for issues like lack of statistical power
+or confounding. Diagnostics are run by default when
+<code>runDiagnostics = TRUE</code>.</p>
+<p>The default thresholds can be viewed or modified:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>thresholds <span class="ot">&lt;-</span> <span class="fu">getDefaultDiagnosticThresholds</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">str</span>(thresholds)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; List of 6</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;  $ mdrrMaxAcceptable         : num 10</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt;  $ maxPreExposureProportion  : num 0.05</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt;  $ preExposurePThreshold     : num 0.05</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;  $ maxEventDependentCensoring: num 0.25</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt;  $ minEventsPerWindow        : num 3</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;  $ easeMaxAcceptable         : num 0.25</span></span></code></pre></div>
+<p>We implement a <strong>Tiered Blinding</strong> system based on these
+diagnostics: 1. <strong>Tier 1 (Unblind for Calibration)</strong>: If
+core diagnostics pass (Pre-Exposure Gain, Event-Dependent Observation,
+and EASE) but power (MDRR) is insufficient, the result can still be used
+as a negative control for calibration. 2. <strong>Tier 2
+(Unblind)</strong>: If <em>all</em> diagnostics (including power) pass,
+the result is considered valid for unblinding.</p>
+<p>Let’s look at the raw diagnostic results:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>diagnostics <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(outputFolder, <span class="st">&quot;scc_diagnostics_summary.csv&quot;</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co"># Show the diagnostic results for analysis 2</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>diagnostics <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">filter</span>(analysis_id <span class="sc">==</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="fu">select</span>(target_cohort_id, outcome_cohort_id, diagnostic_name, diagnostic_value, pass) <span class="sc">%&gt;%</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="22%" />
+<col width="29%" />
+<col width="20%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">target_cohort_id</th>
+<th align="right">outcome_cohort_id</th>
+<th align="left">diagnostic_name</th>
+<th align="left">diagnostic_value</th>
+<th align="right">pass</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="left">MDRR</td>
+<td align="left">NA</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="left">MDRR</td>
+<td align="left">NA</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">3</td>
+<td align="left">MDRR</td>
+<td align="left">NA</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="left">UNBLIND</td>
+<td align="left">NA</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="left">UNBLIND</td>
+<td align="left">NA</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">3</td>
+<td align="left">UNBLIND</td>
+<td align="left">NA</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="left">UNBLIND_FOR_CALIBRATION</td>
+<td align="left">NA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="left">UNBLIND_FOR_CALIBRATION</td>
+<td align="left">NA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">3</td>
+<td align="left">UNBLIND_FOR_CALIBRATION</td>
+<td align="left">NA</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>If the <code>pass</code> column is 0, the diagnostic failed. <em>See
+the <strong>Study Diagnostics</strong> vignette for a detailed
+explanation of each test.</em></p>
+<p><em>Note: Blinding rules (<code>UNBLIND</code> and
+<code>UNBLIND_FOR_CALIBRATION</code>) can be computed from this test
+data using the <code>getDiagnosticsSummary()</code> function on the
+returned <code>.runSccDiagnostics</code> object in memory, or by
+applying the tiered blinding logic to the CSV table manually.</em></p>
+</div>
+<div id="empirical-calibration" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Empirical
+Calibration</h1>
+<p>Observational studies often suffer from systematic error (bias). We
+can use <strong>Empirical Calibration</strong> to adjust for this bias
+using negative controls — pairs of exposures and outcomes where we
+believe the true effect size is 1 (no effect).</p>
+<p>In this example, we will treat <strong>Celecoxib (1)</strong> and
+<strong>Diclofenac (2)</strong> combined with <strong>GI Bleed
+(3)</strong> as “negative controls” purely for demonstration
+purposes.</p>
+<p>We supply the <code>negativeControlPairs</code> argument. These pairs
+are used to fit a null distribution which is then used to calibrate the
+p-values and confidence intervals of our target analysis (<strong>NSAIDs
+(4)</strong> vs <strong>GI Bleed (3)</strong>).</p>
+<p><em>Note: When negative controls are supplied, the package also
+calculates the Expected Absolute Systematic Error (EASE)
+diagnostic.</em></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Define negative controls (formatted as list of vectors: c(exposureId, outcomeId))</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>negativeControls <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="co"># Celecoxib - GI Bleed (Demo only!)</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>) <span class="co"># Diclofenac - GI Bleed (Demo only!)</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">runSelfControlledCohort</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">connectionDetails =</span> connectionDetails,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">cdmDatabaseSchema =</span> cdmDatabaseSchema,</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">exposureTable =</span> <span class="st">&quot;cohort&quot;</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">outcomeTable =</span> <span class="st">&quot;cohort&quot;</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="at">exposureIds =</span> <span class="fu">c</span>(<span class="dv">4</span>), <span class="co"># Target: NSAIDs</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="at">outcomeIds =</span> <span class="fu">c</span>(<span class="dv">3</span>), <span class="co"># Outcome: GI Bleed</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="at">analysisId =</span> <span class="dv">4</span>, <span class="co"># Unique ID for this calibration run</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  <span class="at">negativeControlPairs =</span> negativeControls, <span class="co"># &lt;--- Supply negative controls</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="at">resultExportPath =</span> outputFolder,</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="at">databaseId =</span> <span class="dv">1</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>)</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt; Computing time at risk exposed and unexposed windows</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt; Retrieving counts from database</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=====                                                                 |   8%  |                                                                              |===========                                                           |  15%  |                                                                              |================                                                      |  23%  |                                                                              |======================                                                |  31%  |                                                                              |===========================                                           |  38%  |                                                                              |================================                                      |  46%  |                                                                              |======================================                                |  54%  |                                                                              |===========================================                           |  62%  |                                                                              |================================================                      |  69%  |                                                                              |======================================================                |  77%  |                                                                              |===========================================================           |  85%  |                                                                              |=================================================================     |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt; Computing raw effect estimates</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt; Initiating cluster with 10 threads</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt; Stopping cluster</span></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co">#&gt; Running diagnostics</span></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt; Running SCC diagnostics</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt; - Running MDRR (power) diagnostic</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt; - Running pre-exposure gain diagnostic</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt; - Running event-dependent observation diagnostic</span></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="co">#&gt; - Running EASE (systematic error) diagnostic</span></span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co">#&gt; Completed 3 diagnostic tests</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt; 1 diagnostic test(s) failed:</span></span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt; Computing time at risk distribution statistics</span></span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |====                                                                  |   6%  |                                                                              |========                                                              |  12%  |                                                                              |============                                                          |  18%  |                                                                              |================                                                      |  24%  |                                                                              |=====================                                                 |  29%  |                                                                              |=========================                                             |  35%  |                                                                              |=============================                                         |  41%  |                                                                              |=================================                                     |  47%  |                                                                              |=====================================                                 |  53%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  65%  |                                                                              |=================================================                     |  71%  |                                                                              |======================================================                |  76%  |                                                                              |==========================================================            |  82%  |                                                                              |==============================================================        |  88%  |                                                                              |==================================================================    |  94%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co">#&gt; Cleaning up intermedate tables</span></span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |======                                                                |   8%  |                                                                              |============                                                          |  17%  |                                                                              |==================                                                    |  25%  |                                                                              |=======================                                               |  33%  |                                                                              |=============================                                         |  42%  |                                                                              |===================================                                   |  50%  |                                                                              |=========================================                             |  58%  |                                                                              |===============================================                       |  67%  |                                                                              |====================================================                  |  75%  |                                                                              |==========================================================            |  83%  |                                                                              |================================================================      |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt; Performing SCC analysis took 8.28 secs</span></span></code></pre></div>
+<p>The results file now contains calibrated estimates
+(<code>calibrated_rr</code>, <code>calibrated_lb_95</code>,
+<code>calibrated_ub_95</code>, <code>calibrated_p_value</code>).</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(outputFolder, <span class="st">&quot;scc_result.csv&quot;</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>results <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="fu">filter</span>(analysis_id <span class="sc">==</span> <span class="dv">4</span>, target_cohort_id <span class="sc">==</span> <span class="dv">4</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="fu">select</span>(target_cohort_id, rr, calibrated_rr, p_value, calibrated_p_value) <span class="sc">%&gt;%</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">3</span>)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">target_cohort_id</th>
+<th align="right">rr</th>
+<th align="left">calibrated_rr</th>
+<th align="left">p_value</th>
+<th align="left">calibrated_p_value</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+<p><em>Note: With only 2 negative controls, the calibration will be very
+approximate. Real studies should use dozens of negative
+controls.</em></p>
+</div>
+<div id="multi-analysis-workflow" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> Multi-Analysis
+Workflow</h1>
+<p>For larger studies, it is common practice to perform multiple
+distinct analyses (using different risk window settings) across several
+exposure-outcome pairs simultaneously. You can use the
+<code>runSccAnalyses</code> function to handle this workflow.</p>
+<p>First, define the parameters for each analysis:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Analysis 1: Standard risk windows (1-30 days exposed vs pre-exposure)</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>sccArgs1 <span class="ot">&lt;-</span> <span class="fu">createRunSelfControlledCohortArgs</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">riskWindowStartExposed =</span> <span class="dv">1</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">riskWindowEndExposed =</span> <span class="dv">30</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">addLengthOfExposureExposed =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">riskWindowStartUnexposed =</span> <span class="sc">-</span><span class="dv">30</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="at">riskWindowEndUnexposed =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">addLengthOfExposureUnexposed =</span> <span class="cn">FALSE</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>)</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>analysis1 <span class="ot">&lt;-</span> <span class="fu">createSccAnalysis</span>(</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="at">analysisId =</span> <span class="dv">101</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  <span class="at">description =</span> <span class="st">&quot;Standard 30-day windows&quot;</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  <span class="at">runSelfControlledCohortArgs =</span> sccArgs1</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>)</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co"># Analysis 2: Longer exposure risk window (1-90 days exposed)</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>sccArgs2 <span class="ot">&lt;-</span> <span class="fu">createRunSelfControlledCohortArgs</span>(</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>  <span class="at">riskWindowStartExposed =</span> <span class="dv">1</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>  <span class="at">riskWindowEndExposed =</span> <span class="dv">90</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>  <span class="at">addLengthOfExposureExposed =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a>  <span class="at">riskWindowStartUnexposed =</span> <span class="sc">-</span><span class="dv">90</span>,</span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a>  <span class="at">riskWindowEndUnexposed =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>  <span class="at">addLengthOfExposureUnexposed =</span> <span class="cn">FALSE</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a>)</span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a>analysis2 <span class="ot">&lt;-</span> <span class="fu">createSccAnalysis</span>(</span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a>  <span class="at">analysisId =</span> <span class="dv">102</span>,</span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a>  <span class="at">description =</span> <span class="st">&quot;Extended 90-day windows&quot;</span>,</span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a>  <span class="at">runSelfControlledCohortArgs =</span> sccArgs2</span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a>)</span></code></pre></div>
+<p>Next, define your exposure-outcome hypotheses:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Create hypotheses (treating IDs 1 and 2 as negative controls)</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>eo1 <span class="ot">&lt;-</span> <span class="fu">createExposureOutcome</span>(<span class="at">exposureId =</span> <span class="dv">4</span>, <span class="at">outcomeId =</span> <span class="dv">3</span>) <span class="co"># Target (NSAIDs - GiBleed)</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>eo2 <span class="ot">&lt;-</span> <span class="fu">createExposureOutcome</span>(<span class="at">exposureId =</span> <span class="dv">1</span>, <span class="at">outcomeId =</span> <span class="dv">3</span>, <span class="at">trueEffectSize =</span> <span class="dv">1</span>) <span class="co"># Control 1</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>eo3 <span class="ot">&lt;-</span> <span class="fu">createExposureOutcome</span>(<span class="at">exposureId =</span> <span class="dv">2</span>, <span class="at">outcomeId =</span> <span class="dv">3</span>, <span class="at">trueEffectSize =</span> <span class="dv">1</span>) <span class="co"># Control 2</span></span></code></pre></div>
+<p>Finally, execute the analyses spanning all combinations:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>multiResultsFolder <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="st">&quot;scc_multi&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">runSccAnalyses</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">connectionDetails =</span> connectionDetails,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">cdmDatabaseSchema =</span> cdmDatabaseSchema,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">exposureTable =</span> <span class="st">&quot;cohort&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">outcomeTable =</span> <span class="st">&quot;cohort&quot;</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">resultsFolder =</span> multiResultsFolder,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">sccAnalysisList =</span> <span class="fu">list</span>(analysis1, analysis2),</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">exposureOutcomeList =</span> <span class="fu">list</span>(eo1, eo2, eo3),</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="at">databaseId =</span> <span class="dv">1</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="at">computeThreads =</span> <span class="dv">1</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="at">analysisThreads =</span> <span class="dv">1</span> <span class="co"># Serial execution for Eunomia SQLite</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt; *** Running multiple analysis ***</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; Initiating cluster consisting only of main thread</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; Computing time at risk exposed and unexposed windows</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; Retrieving counts from database</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=====                                                                 |   8%  |                                                                              |===========                                                           |  15%  |                                                                              |================                                                      |  23%  |                                                                              |======================                                                |  31%  |                                                                              |===========================                                           |  38%  |                                                                              |================================                                      |  46%  |                                                                              |======================================                                |  54%  |                                                                              |===========================================                           |  62%  |                                                                              |================================================                      |  69%  |                                                                              |======================================================                |  77%  |                                                                              |===========================================================           |  85%  |                                                                              |=================================================================     |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; Computing raw effect estimates</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; Initiating cluster consisting only of main thread</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; Running diagnostics</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; Running SCC diagnostics</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; - Running MDRR (power) diagnostic</span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; - Running pre-exposure gain diagnostic</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt; - Running event-dependent observation diagnostic</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a><span class="co">#&gt; - Running EASE (systematic error) diagnostic</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a><span class="co">#&gt; Completed 15 diagnostic tests</span></span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a><span class="co">#&gt; 5 diagnostic test(s) failed:</span></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="co">#&gt; Computing time at risk distribution statistics</span></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |====                                                                  |   6%  |                                                                              |========                                                              |  12%  |                                                                              |============                                                          |  18%  |                                                                              |================                                                      |  24%  |                                                                              |=====================                                                 |  29%  |                                                                              |=========================                                             |  35%  |                                                                              |=============================                                         |  41%  |                                                                              |=================================                                     |  47%  |                                                                              |=====================================                                 |  53%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  65%  |                                                                              |=================================================                     |  71%  |                                                                              |======================================================                |  76%  |                                                                              |==========================================================            |  82%  |                                                                              |==============================================================        |  88%  |                                                                              |==================================================================    |  94%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a><span class="co">#&gt; Cleaning up intermedate tables</span></span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |======                                                                |   8%  |                                                                              |============                                                          |  17%  |                                                                              |==================                                                    |  25%  |                                                                              |=======================                                               |  33%  |                                                                              |=============================                                         |  42%  |                                                                              |===================================                                   |  50%  |                                                                              |=========================================                             |  58%  |                                                                              |===============================================                       |  67%  |                                                                              |====================================================                  |  75%  |                                                                              |==========================================================            |  83%  |                                                                              |================================================================      |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a><span class="co">#&gt; Performing SCC analysis took 0.861 secs</span></span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="co">#&gt; Computing time at risk exposed and unexposed windows</span></span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a><span class="co">#&gt; Retrieving counts from database</span></span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=====                                                                 |   8%  |                                                                              |===========                                                           |  15%  |                                                                              |================                                                      |  23%  |                                                                              |======================                                                |  31%  |                                                                              |===========================                                           |  38%  |                                                                              |================================                                      |  46%  |                                                                              |======================================                                |  54%  |                                                                              |===========================================                           |  62%  |                                                                              |================================================                      |  69%  |                                                                              |======================================================                |  77%  |                                                                              |===========================================================           |  85%  |                                                                              |=================================================================     |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1"></a><span class="co">#&gt; Computing raw effect estimates</span></span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1"></a><span class="co">#&gt; Initiating cluster consisting only of main thread</span></span>
+<span id="cb13-46"><a href="#cb13-46" tabindex="-1"></a><span class="co">#&gt; Running diagnostics</span></span>
+<span id="cb13-47"><a href="#cb13-47" tabindex="-1"></a><span class="co">#&gt; Running SCC diagnostics</span></span>
+<span id="cb13-48"><a href="#cb13-48" tabindex="-1"></a><span class="co">#&gt; - Running MDRR (power) diagnostic</span></span>
+<span id="cb13-49"><a href="#cb13-49" tabindex="-1"></a><span class="co">#&gt; - Running pre-exposure gain diagnostic</span></span>
+<span id="cb13-50"><a href="#cb13-50" tabindex="-1"></a><span class="co">#&gt; - Running event-dependent observation diagnostic</span></span>
+<span id="cb13-51"><a href="#cb13-51" tabindex="-1"></a><span class="co">#&gt; - Running EASE (systematic error) diagnostic</span></span>
+<span id="cb13-52"><a href="#cb13-52" tabindex="-1"></a><span class="co">#&gt; Completed 15 diagnostic tests</span></span>
+<span id="cb13-53"><a href="#cb13-53" tabindex="-1"></a><span class="co">#&gt; 5 diagnostic test(s) failed:</span></span>
+<span id="cb13-54"><a href="#cb13-54" tabindex="-1"></a><span class="co">#&gt; Computing time at risk distribution statistics</span></span>
+<span id="cb13-55"><a href="#cb13-55" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |====                                                                  |   6%  |                                                                              |========                                                              |  12%  |                                                                              |============                                                          |  18%  |                                                                              |================                                                      |  24%  |                                                                              |=====================                                                 |  29%  |                                                                              |=========================                                             |  35%  |                                                                              |=============================                                         |  41%  |                                                                              |=================================                                     |  47%  |                                                                              |=====================================                                 |  53%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  65%  |                                                                              |=================================================                     |  71%  |                                                                              |======================================================                |  76%  |                                                                              |==========================================================            |  82%  |                                                                              |==============================================================        |  88%  |                                                                              |==================================================================    |  94%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-56"><a href="#cb13-56" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-57"><a href="#cb13-57" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-58"><a href="#cb13-58" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-59"><a href="#cb13-59" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-60"><a href="#cb13-60" tabindex="-1"></a><span class="co">#&gt; Cleaning up intermedate tables</span></span>
+<span id="cb13-61"><a href="#cb13-61" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |======                                                                |   8%  |                                                                              |============                                                          |  17%  |                                                                              |==================                                                    |  25%  |                                                                              |=======================                                               |  33%  |                                                                              |=============================                                         |  42%  |                                                                              |===================================                                   |  50%  |                                                                              |=========================================                             |  58%  |                                                                              |===============================================                       |  67%  |                                                                              |====================================================                  |  75%  |                                                                              |==========================================================            |  83%  |                                                                              |================================================================      |  92%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb13-62"><a href="#cb13-62" tabindex="-1"></a><span class="co">#&gt; Performing SCC analysis took 0.662 secs</span></span></code></pre></div>
+<p>This generates comprehensive outputs across the entire combinatorics
+of tests.</p>
+</div>
+<div id="working-with-the-results-database" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Working with the
+Results Database</h1>
+<p>The <code>SelfControlledCohort</code> package provides tools to
+create a robust results data model. This is useful for sharing results
+or powering a Shiny application.</p>
+<p>In this section, we will: 1. Create a local SQLite database to store
+our results. 2. Create the standard results schema tables. 3. Upload the
+CSV results we generated into this database. 4. Query the database to
+see the results.</p>
+<p>First, let’s create a new local SQLite database file for the
+results.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>resultsDbFile <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="st">&quot;scc_results_db&quot;</span>, <span class="at">fileext =</span> <span class="st">&quot;.sqlite&quot;</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>resultsConnectionDetails <span class="ot">&lt;-</span> <span class="fu">createConnectionDetails</span>(<span class="at">dbms =</span> <span class="st">&quot;sqlite&quot;</span>, <span class="at">server =</span> resultsDbFile)</span></code></pre></div>
+<p>Next, we use <code>createResultsDataModel</code> to create the
+tables. For SQLite, we must use the ‘main’ schema.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">createResultsDataModel</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="at">connectionDetails =</span> resultsConnectionDetails,</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">databaseSchema =</span> <span class="st">&quot;main&quot;</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>)</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; Migrating data set</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; Migrator using SQL files in SelfControlledCohort</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; Creating migrations table</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; Migrations table created</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; Executing migration: Migration_1-2.0.0.sql</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |==============                                                        |  20%  |                                                                              |============================                                          |  40%  |                                                                              |==========================================                            |  60%  |                                                                              |========================================================              |  80%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; Saving migration: Migration_1-2.0.0.sql</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%</span></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt; Migration complete Migration_1-2.0.0.sql</span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="co">#&gt; Closing database connection</span></span></code></pre></div>
+<p>Now we upload the results from our <code>outputFolder</code> into the
+database.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># For this example, we will upload the main results and settings.</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co"># We remove other tables to simplify the upload for this demonstration.</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>filesToRemove <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;scc_diagnostics_summary.csv&quot;</span>, <span class="st">&quot;scc_stat.csv&quot;</span>, <span class="st">&quot;scc_outcome_exposure.csv&quot;</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> filesToRemove) {</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="fu">file.path</span>(outputFolder, f))) {</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>    <span class="fu">unlink</span>(<span class="fu">file.path</span>(outputFolder, f))</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  }</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>}</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="fu">uploadResults</span>(</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  <span class="at">connectionDetails =</span> resultsConnectionDetails,</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>  <span class="at">schema =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>  <span class="at">resultsFolder =</span> outputFolder</span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>)</span></code></pre></div>
+<p>Finally, we can connect to this results database and query it like
+any other OMOP CDM database.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>resultsConn <span class="ot">&lt;-</span> <span class="fu">connect</span>(resultsConnectionDetails)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co"># Query the scc_result table for our calibrated run (Analysis 4)</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>resultsDb <span class="ot">&lt;-</span> <span class="fu">querySql</span>(resultsConn, <span class="st">&quot;SELECT * FROM main.scc_result WHERE analysis_id = 4&quot;</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co"># Show the results from the database</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>resultsDb <span class="sc">%&gt;%</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  <span class="fu">select</span>(target_cohort_id, outcome_cohort_id, rr, calibrated_rr) <span class="sc">%&gt;%</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">3</span>)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">target_cohort_id</th>
+<th align="right">outcome_cohort_id</th>
+<th align="right">rr</th>
+<th align="right">calibrated_rr</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">disconnect</span>(resultsConn)</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
